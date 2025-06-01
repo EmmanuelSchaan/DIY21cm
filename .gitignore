@@ -6,6 +6,7 @@
 *.pdf
 *.png
 *.swp
+*.gif
 
 input/planck_maps/
 output/
