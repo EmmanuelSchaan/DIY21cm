@@ -526,7 +526,9 @@ def plot(f, p, label=None, yLabel=r'Uncalibrated intensity [au]'):
         for i, (f_arr, p_arr) in enumerate(zip(f, p)):
             color = cmap(norm(i))  # Get color based on index
             x = (f_arr - nu21cm) / 1.e6  # Convert to MHz
-            ax.plot(x, p_arr, label=label, color=color)
+            #ax.plot(x, p_arr, label=label, color=color)
+            lbl = label[i] if isinstance(label, list) else label
+            ax.plot(x, p_arr, label=lbl, color=color)
 
     elif isinstance(f, np.ndarray):  # f is a 1D or 2D numpy array
         if f.ndim == 1:  # f is a 1D array
@@ -538,7 +540,9 @@ def plot(f, p, label=None, yLabel=r'Uncalibrated intensity [au]'):
             for i, (f_arr, p_arr) in enumerate(zip(f, p)):
                 color = cmap(norm(i))  # Get color based on index
                 x = (f_arr - nu21cm) / 1.e6  # Convert to MHz
-                ax.plot(x, p_arr, label=label, color=color)
+                #ax.plot(x, p_arr, label=label, color=color)
+                lbl = label[i] if isinstance(label, list) else label
+                ax.plot(x, p_arr, label=lbl, color=color)
     else:
         raise TypeError("f must be either a list, 1D numpy array, or 2D numpy array.")
 
