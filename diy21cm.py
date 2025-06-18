@@ -231,9 +231,8 @@ def listINDIDevices():
 
 
 def setMountInfo(param):
-   '''Get mount info from INDI server:
-   ra, dec, lat, lon.
-   '''
+   '''Get mount info from INDI server: RA, Dec, Lat, Lon.'''
+
    # Parameters to be read from INDI server
    param['ra'] = np.nan
    param['dec'] = np.nan
@@ -276,7 +275,6 @@ def setMountInfo(param):
                      elif widget.getName()=="DEC":
                         param['dec'] = widget.getValue()
 
-
                # Select the geographic coordinates property
                if genericProperty.getName()==param['latLonPropertyName']:
                   for widget in PyIndi.PropertyNumber(genericProperty):
@@ -288,7 +286,7 @@ def setMountInfo(param):
                         param['lon'] = widget.getValue() # [deg]
 
    except:
-      print("Could not read ra, dec from mount")
+      print("Could not read coordinates from mount")
 
    print("Mount info from INDI server:")
    print("RA = "+str(param['ra'])+" deg")
@@ -421,6 +419,8 @@ def takeExposure(param):
       param['expStatus'] = False
 
 
+#####################################################
+# Calibration
 
 def calibrateHotCold(p, pH, pC, tH, tC):
    '''compute calibrated temperature spectum t [K]
@@ -463,43 +463,36 @@ def attemptCalibration(param):
    if os.path.exists(pathCold):
       paramCold = json.loadJson(pathCold)
       param['pCold'] = paramCold['pOn']
-      partialCalib = True
-   else:
-      fullCalib = False
 
    # check if hot exposure exists
    pathHot = param['pathOut']+'/'+getLatestName(param, expType='hot')+'.json'
    if os.path.exists(pathHot):
       paramHot = json.loadJson(pathHot)
       param['pHot'] = paramHot['pOn']
-      partialCalib = True
-   else:
-      fullCalib = False
 
    # perform full calibration if possible
-   if fullCalib:
+   if 'pHot' in param and 'pCold' in param:
       param['tCalibratedHotCold'] = calibrateHotCold(param['pOn'], 
             param['pHot'], 
             param['pCold'], 
             300., # tHot [K] 
             20.)  # tCold [K]
-   # else perform partial calibration if possible
-   elif partialCalib:
-      if 'pCold' in param:
-         pRef = param['pCold']
-         param['tCalibratedCold'] = calibratePartial(param['pOn'], 
-               pRef, 
-               20.)  # tCold [K]
-      elif 'pHot' in param:
-         pRef = param['pHot']
-         param['tCalibratedHot'] = calibratePartial(param['pOn'], 
-               pRef, 
-               300.)  # tCold [K]
+   # also perform partial calibration if possible
+   if 'pCold' in param:
+      param['tCalibratedCold'] = calibratePartial(param['pOn'], 
+            param['pCold'], 
+            20.)  # tCold [K]
+   if 'pHot' in param:
+      param['tCalibratedHot'] = calibratePartial(param['pOn'], 
+            param['pHot'], 
+            300.)  # tCold [K]
 
 
+#####################################################
 
 def saveJson(param):
-   # save all parameters and data
+   '''save all parameters and data
+   '''
    path = param['pathOut']+"/"+param['fileName']+".json"
    json.saveJson(param, path)
 
@@ -507,6 +500,8 @@ def saveJson(param):
    path = param['pathOut']+"/"+getLatestName(param)+".json"
    json.saveJson(param, path)
 
+
+#####################################################
 
 def plot(f, p, label=None, yLabel=r'Uncalibrated intensity [au]'):
     fig=plt.figure(0)
@@ -559,12 +554,7 @@ def plot(f, p, label=None, yLabel=r'Uncalibrated intensity [au]'):
     # Optional: Customize tick labels using FuncFormatter
     ax2.xaxis.set_major_formatter(FuncFormatter(lambda val, pos: f'{val:.1f}'))  # Optional rounding
 
-
     return fig, ax, ax2
-
-
-
-
 
 
 def savePlot(param):
@@ -593,7 +583,7 @@ def savePlot(param):
       fig.clf()
 
 
-      # If calibrated or partially calibrated temperature spectra are avilable,
+      # If calibrated or partially calibrated temperature spectra are available,
       # plot them
       for key in set(param.keys()) & {'tCalibratedHotCold', 'tCalibratedHot', 'tCalibratedCold'}:
          fig, ax, ax2 = plot(param['fOn'], param[key], label=key, yLabel=r'Antenna temperature [K]')
@@ -604,6 +594,10 @@ def savePlot(param):
          fig.savefig(param['pathFig']+"/"+getLatestName(param)+"_"+key+".pdf", bbox_inches='tight')
          #
          fig.clf()
+
+
+
+#####################################################
 
 def saveScreenshot(param):
    '''Save a screenshot to the figures folder.
@@ -619,7 +613,6 @@ def saveScreenshot(param):
       print(f"Error occurred: {e.stderr.decode()}")
    except FileNotFoundError:
       print("scrot command not found. Make sure scrot is installed and in your PATH.")
-
 
 
 
