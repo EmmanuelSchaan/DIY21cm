@@ -10,29 +10,9 @@ WIFI antenna --> LNA --> RTL-SDR --> mini PC running Kubuntu.
 
 ### rtl-sdr package
 
-I did not use the standard
+I installed the rtl-sdr command line tools:
 ```
 sudo apt install rtl-sdr
-```
-though it might have worked. 
-I read that I needed to compile from source with some specific compile options, to enable the "detached kernel driver".
-So I followed the instructions scattered at the top and bottom of this page:
-https://m3php.com/2012/10/10/remote-sdr-using-raspberry-pi-rtl_tcp/
-and on this forum:
-https://forums.raspberrypi.com/viewtopic.php?t=81731 .
-Specifically, I ran:
-```
-sudo apt install pkg-config, libusb-1.0-0
-sudo apt install cmake
-sudo apt install git
-git clone git://git.osmocom.org/rtl-sdr.git
-cd rtl-sdr/
-mkdir build
-cd build
-cmake ../ -DINSTALL_UDEV_RULES=ON -DDETACH_KERNEL_DRIVER=ON
-make
-sudo make install
-sudo ldconfig
 ```
 Then the commands
 ```
@@ -41,24 +21,7 @@ rtl_power
 ```
 both worked.
 
-However, when using python, through rtlobs, which calls pyrtlsdr,
-I get an error about kernel driver already claiming the device.
-This was fixed by blacklisting the kernel driver:
-```
-cd /etc/modprobe.d/
-sudo gedit ban-rtl.conf
-and add the following to the file:
-blacklist dvb_usb_rtl28xxu
-reboot
-```
-
-If debugging is needed, try
-```
-rtl_test
-rtl_power
-```
-
-The LNA needs to be powered via bias T on the RTL SDR.
+I was able to power on and off the LNA, via the bias T on the RTL-SDR:
 To activate the bias T:
 ```
 rtl_biast -b 1
@@ -71,15 +34,38 @@ rtl_biast -b 0
 ### pyrtlsdr python package
 
 ```
-pip install pyrtlsdr[lib]
+sudo apt-get install librtlsdr-dev
+pip install pyrtlsdr
 ```
 (got a warning that this version of pyrtlsdr does not provide [lib])
 
 ### rtlobs python package
 
-This github repo is perfect for this:
+This github repo is great for this application:
 https://github.com/evanmayer/rtlobs .
 I forked it to tweak it,
 and cloned it from my github:
 https://github.com/EmmanuelSchaan/rtlobs.git .
 I haven't installed it: I just give its path to my python codes that use it...
+
+### PyIndi client, to communicate with devices on INDI server in python
+
+Thisis not needed for drift scan observations. 
+I only use it to communicate with my go-to mount and camera, so that I can point at specific RA and Dec, and plate solve.
+I installed the dependencies described in https://github.com/indilib/pyindi-client
+```
+sudo apt-add-repository ppa:mutlaqja/ppa
+sudo apt-get -y install python3-indi-client
+sudo apt-get install libindi-dev swig libcfitsio-dev libnova-dev
+```
+Then:
+```
+git clone https://github.com/indilib/pyindi-client.git
+cd pyindi-client
+python setup.py install
+```
+I then checked that I could import it from my conda python:
+```
+ipython
+import PyIndi
+```
